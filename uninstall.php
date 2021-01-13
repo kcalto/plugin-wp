@@ -6,3 +6,5 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 }
 
 // TODO: Uninstall script...
+
+?>
