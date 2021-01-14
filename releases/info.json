@@ -1,0 +1,8 @@
+{
+  "version": "0.0.2",
+  "relative_download_url": "packages/kcalto-0.0.2.zip",
+  "requires": "5.0",
+  "tested": "5.6",
+  "requires_php": "5.3",
+  "last_updated": "2021-01-14 17:31:51"
+}
