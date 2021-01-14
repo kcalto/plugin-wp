@@ -1,0 +1,1 @@
+aws s3 cp --recursive ./releases s3://releases.kcalto.com/wordpress
