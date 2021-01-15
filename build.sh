@@ -13,6 +13,7 @@ FILENAME="releases/packages/kcalto-$VERSION.zip"
 
 # Add a way to know plugin's version
 touch ./src/version.php
+truncate -s 0 ./src/version.php
 echo "<?php define('KCALTO_CURRENT_VERSION', '$VERSION');\n" > ./src/version.php
 
 # Up is the only way forward
