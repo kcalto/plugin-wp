@@ -2,31 +2,34 @@
 
 $kcalto_api_url = 'https://kcalto.com/api/recipes/';
 
-class kcalto_Widget extends WP_Widget {
-  public function __construct() {
-    $widget_options = array( 
+class kcalto_Widget extends WP_Widget
+{
+  public function __construct()
+  {
+    $widget_options = array(
       'classname' => 'kcalto_Widget',
       'description' => "Kcalto's nutrition values table",
     );
-    parent::__construct( 'kcalto_Widget', 'Kcalto Widget', $widget_options );
+    parent::__construct('kcalto_Widget', 'Kcalto Widget', $widget_options);
   }
 
-  private function get_custom_canonical_url() {
+  private function get_custom_canonical_url()
+  {
     global $wpdb;
     global $post;
-  
+
     try {
       // TODO: Query for this only if this plugin's option is enabled
       $yoast_query = $wpdb->prepare("SELECT `canonical` FROM `{$wpdb->prefix}yoast_indexable` WHERE `object_type`=\"post\" AND `object_id`=\"%d\"", $post->ID);
       $yoast_seo_canonical = $wpdb->get_results($yoast_query)[0]->canonical;
-      if ( $yoast_seo_canonical ) {
+      if ($yoast_seo_canonical) {
         return $yoast_seo_canonical;
       }
 
       // TODO: Query for this only if this plugin's option is enabled
       $aioseo_query = $wpdb->prepare("SELECT `canonical_url` FROM `{$wpdb->prefix}aioseo_posts` WHERE `post_id`=\"%d\"", $post->ID);
       $aioseo_seo_canonical = $wpdb->get_results($aioseo_query)[0]->canonical_url;
-      if ( $aioseo_seo_canonical ) {
+      if ($aioseo_seo_canonical) {
         return $aioseo_seo_canonical;
       }
     } catch (Exception $e) {
@@ -37,15 +40,16 @@ class kcalto_Widget extends WP_Widget {
     return wp_get_canonical_url();
   }
 
-  public function widget( $args, $instance ) {
+  public function widget($args, $instance)
+  {
     global $kcalto_api_url;
 
-    $title = apply_filters( 'widget_title', $instance[ 'title' ] );
+    $title = apply_filters('widget_title', $instance['title']);
 
     $canonical_url = $this->get_custom_canonical_url();
 
     $url = $kcalto_api_url . preg_replace('/https?:\/\//', '', $canonical_url);
-    
+
     // TODO: Cache the request using url as key
     $response = wp_remote_get($url);
     $response_code = wp_remote_retrieve_response_code($response);
@@ -65,4 +69,4 @@ class kcalto_Widget extends WP_Widget {
   }
 }
 
-?>
+    ?>
