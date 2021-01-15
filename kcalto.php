@@ -2,8 +2,7 @@
 /**
  * Plugin Name: Kcalto
  * Description: Nutrition values for each reported recipe on the Kcalto platform.
- * Plugin URI: https://github.com/kcalto/plugin-wp
- * Author: Kcalto
+ * Author: Team Kcalto
  * Author URI: https://kcalto.com/
  */
 

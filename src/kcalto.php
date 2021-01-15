@@ -3,14 +3,17 @@ require_once('widget.php');
 require_once('version.php');
 
 if ( !defined( 'KCALTO_SLUG' ) ) {
-	define( 'KCALTO_SLUG', 'KCALTO' );
+  // Changing this breaks remote updates
+	define( 'KCALTO_SLUG', 'kcalto/kcalto.php' );
 }
 
 if ( !defined('KCALTO_TRANSIENT')) {
   define ('KCALTO_TRANSIENT', 'update_' . KCALTO_SLUG);
 }
 
-$INFO_URL = 'http://releases.kcalto.com/wordpress/info.json';
+if ( !defined('KCALTO_REMOTE_RELEASES_URL')) {
+  define ('KCALTO_REMOTE_RELEASES_URL', 'http://releases.kcalto.com/wordpress/info.json');
+}
 
 function kcalto_hook_activation() {
 }
@@ -32,7 +35,7 @@ function kcalto_get_cached_remote_info() {
   */
   if( false == $remote = get_transient( KCALTO_TRANSIENT ) ) {
  
-		$remote = wp_remote_get( $INFO_URL, array(
+		$remote = wp_remote_get( KCALTO_REMOTE_RELEASES_URL, array(
 			'timeout' => 10,
 			'headers' => array(
 				'Accept' => 'application/json'
@@ -53,8 +56,6 @@ function kcalto_get_cached_remote_info() {
 }
 
 function kcalto_plugin_info( $res, $action, $args ){
-  global $INFO_URL;
-
 	// do nothing if this is not about getting plugin information
 	if( 'plugin_information' !== $action ) {
 		return false;
@@ -67,7 +68,7 @@ function kcalto_plugin_info( $res, $action, $args ){
   
   $remote = kcalto_get_cached_remote_info();
   
-	if( ! is_wp_error( $remote ) && isset( $remote['response']['code'] ) && $remote['response']['code'] == 200 && ! empty( $remote['body'] ) ) {
+	if( $remote && isset( $remote['response']['code'] ) && $remote['response']['code'] == 200 && ! empty( $remote['body'] ) ) {
  
 		$remote = json_decode( $remote['body'] );
     $res = new stdClass();
@@ -88,34 +89,33 @@ function kcalto_plugin_info( $res, $action, $args ){
     );
     
 		return $res;
- 
+
 	}
  
 	return false;
  
 }
-add_filter('plugins_api', 'kcalto_plugin_info', 20, 3);
+add_filter('plugins_api', 'kcalto_plugin_info', 10, 3);
 
-function kcalto_push_update( $transient ){
-  global $INFO_URL;
- 
+function kcalto_site_transient_update_plugins( $transient ){
 	if ( empty($transient->checked ) ) {
       return $transient;
   }
+  
+  $res = new stdClass();
 
-  $plugin = 'kcalto/kcalto.php';
-	$remote = kcalto_get_cached_remote_info();
+  $res->slug = KCALTO_SLUG;
+  $res->plugin = KCALTO_SLUG;
+  $res->version = KCALTO_CURRENT_VERSION;
 
+  $remote = kcalto_get_cached_remote_info();
 	if( $remote ) {
     
     $remote = json_decode( $remote['body'] ); 
 
 		// your installed plugin version should be on the line below! You can obtain it dynamically of course 
 		if( $remote && version_compare( KCALTO_CURRENT_VERSION, $remote->version, '<' ) && version_compare($remote->requires, get_bloginfo('version'), '<' ) ) {
-      $res = new stdClass();
-      
-			$res->slug = KCALTO_SLUG;
-			$res->plugin = $plugin;
+			
 			$res->new_version = $remote->version;
 			$res->tested = $remote->tested;
       $res->package = $remote->download_url;
@@ -123,15 +123,26 @@ function kcalto_push_update( $transient ){
       $transient->response[$res->plugin] = $res;
     }
 
+  } else {
+    $transient->no_update[$res->plugin] = $res;
   }
 
   $transient->checked[$plugin] = KCALTO_CURRENT_VERSION;
 
   return $transient;
 }
-add_filter('site_transient_update_plugins', 'kcalto_push_update' );
+add_filter('site_transient_update_plugins', 'kcalto_site_transient_update_plugins' );
 
-// TODO: Remote plugin options are not shown on plugin's list.
+function kcalto_plugin_row_meta($plugin_meta, $plugin_file, $plugin_data, $status) {
+  if ($plugin_file !== KCALTO_SLUG) {
+    return $plugin_meta;
+  }
+
+  array_unshift($plugin_meta, 'Version '.KCALTO_CURRENT_VERSION);
+
+  return $plugin_meta;
+}
+add_filter('plugin_row_meta', 'kcalto_plugin_row_meta', 10, 4);
 
 function kcalto_widgets_init() { 
   register_widget( 'kcalto_Widget' );
