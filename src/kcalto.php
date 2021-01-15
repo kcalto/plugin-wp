@@ -127,7 +127,7 @@ function kcalto_site_transient_update_plugins( $transient ){
     $transient->no_update[$res->plugin] = $res;
   }
 
-  $transient->checked[$plugin] = KCALTO_CURRENT_VERSION;
+  $transient->checked[$res->plugin] = KCALTO_CURRENT_VERSION;
 
   return $transient;
 }

@@ -15,19 +15,30 @@ class kcalto_Widget extends WP_Widget {
     global $wpdb;
     global $post;
   
-    // TODO: Query for this only if this plugin's option is enabled
-    $query = $wpdb->prepare("SELECT `canonical` FROM `{$wpdb->prefix}yoast_indexable` WHERE `object_type`=\"post\" AND `object_id`=\"%d\"", $post->ID);
-    $yoast_seo_canonical = $wpdb->get_results($query)[0]->canonical;
-    if ( $yoast_seo_canonical ) {
-      return $yoast_seo_canonical;
+    try {
+      // TODO: Query for this only if this plugin's option is enabled
+      $yoast_query = $wpdb->prepare("SELECT `canonical` FROM `{$wpdb->prefix}yoast_indexable` WHERE `object_type`=\"post\" AND `object_id`=\"%d\"", $post->ID);
+      $yoast_seo_canonical = $wpdb->get_results($yoast_query)[0]->canonical;
+      if ( $yoast_seo_canonical ) {
+        return $yoast_seo_canonical;
+      }
+
+      // TODO: Query for this only if this plugin's option is enabled
+      $aioseo_query = $wpdb->prepare("SELECT `canonical_url` FROM `{$wpdb->prefix}aioseo_posts` WHERE `post_id`=\"%d\"", $post->ID);
+      $aioseo_seo_canonical = $wpdb->get_results($aioseo_query)[0]->canonical_url;
+      if ( $aioseo_seo_canonical ) {
+        return $aioseo_seo_canonical;
+      }
+    } catch (Exception $e) {
+      // Ignore the exception, we just want to be safe
     }
-  
+
+    // Default behaviour:
     return wp_get_canonical_url();
   }
 
   public function widget( $args, $instance ) {
     global $kcalto_api_url;
-    global $post;
 
     $title = apply_filters( 'widget_title', $instance[ 'title' ] );
 
