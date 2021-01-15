@@ -2,29 +2,56 @@
 require_once('widget.php');
 require_once('version.php');
 
-if ( ! defined( 'KCALTO_SLUG' ) ) {
+if ( !defined( 'KCALTO_SLUG' ) ) {
 	define( 'KCALTO_SLUG', 'KCALTO' );
+}
+
+if ( !defined('KCALTO_TRANSIENT')) {
+  define ('KCALTO_TRANSIENT', 'update_' . KCALTO_SLUG);
 }
 
 $INFO_URL = 'http://releases.kcalto.com/wordpress/info.json';
 
 function kcalto_hook_activation() {
-  // TODO
 }
-register_activation_hook( __FILE__, 'kcalto_hook_activation' );
+register_activation_hook( KCALTO_FILE, 'kcalto_hook_activation' );
 
 function kcalto_hook_deactivation() {
-  // TODO: set_transient( 'update_' . KCALTO_SLUG, false, 0 ); // this does not work
-  // Maybe try delete_transient???
+  delete_transient(KCALTO_TRANSIENT);
 }
-register_deactivation_hook( __FILE__, 'kcalto_hook_deactivation' );
+register_deactivation_hook( KCALTO_FILE, 'kcalto_hook_deactivation' );
 
-/*
-* Source: https://rudrastyh.com/wordpress/self-hosted-plugin-update.html
-* $res empty at this step
-* $action 'plugin_information'
-* $args stdClass Object ( [slug] => woocommerce [is_ssl] => [fields] => Array ( [banners] => 1 [reviews] => 1 [downloaded] => [active_installs] => 1 ) [per_page] => 24 [locale] => en_US )
-*/
+function kcalto_hook_uninstall(){
+  kcalto_hook_deactivation();
+}
+register_uninstall_hook(KCALTO_FILE, 'kcalto_hook_uninstall');
+
+function kcalto_get_cached_remote_info() {
+  /*
+  Plugin update code thanks to https://rudrastyh.com/wordpress/self-hosted-plugin-update.html
+  */
+  if( false == $remote = get_transient( KCALTO_TRANSIENT ) ) {
+ 
+		$remote = wp_remote_get( $INFO_URL, array(
+			'timeout' => 10,
+			'headers' => array(
+				'Accept' => 'application/json'
+			) )
+    );
+    
+    if (is_wp_error($remote)) {
+      return false;
+    }
+ 
+		if (isset( $remote['response']['code'] ) && $remote['response']['code'] == 200 && ! empty( $remote['body'] ) ) {
+			set_transient( KCALTO_TRANSIENT, $remote, 12 * 60 * 60 ); // 12 hours cache
+		}
+ 
+  }
+
+  return $remote;
+}
+
 function kcalto_plugin_info( $res, $action, $args ){
   global $INFO_URL;
 
@@ -33,29 +60,12 @@ function kcalto_plugin_info( $res, $action, $args ){
 		return false;
 	}
  
-	$plugin_slug = KCALTO_SLUG; // we are going to use it in many places in this function
- 
 	// do nothing if it is not our plugin
-	if( $plugin_slug !== $args->slug ) {
+	if( KCALTO_SLUG !== $args->slug ) {
 		return false;
-	}
- 
-	// trying to get from cache first
-	if( false == $remote = get_transient( 'update_' . $plugin_slug ) ) {
- 
-		// info.json is the file with the actual plugin information on your server
-		$remote = wp_remote_get( $INFO_URL, array(
-			'timeout' => 10,
-			'headers' => array(
-				'Accept' => 'application/json'
-			) )
-		);
- 
-		if ( ! is_wp_error( $remote ) && isset( $remote['response']['code'] ) && $remote['response']['code'] == 200 && ! empty( $remote['body'] ) ) {
-			set_transient( 'update_' . $plugin_slug, $remote, 12 * 60 * 60 ); // 12 hours cache
-		}
- 
   }
+  
+  $remote = kcalto_get_cached_remote_info();
   
 	if( ! is_wp_error( $remote ) && isset( $remote['response']['code'] ) && $remote['response']['code'] == 200 && ! empty( $remote['body'] ) ) {
  
@@ -63,7 +73,7 @@ function kcalto_plugin_info( $res, $action, $args ){
     $res = new stdClass();
  
 		$res->name = $remote->name;
-		$res->slug = $plugin_slug;
+		$res->slug = KCALTO_SLUG;
 		$res->version = $remote->version;
 		$res->tested = $remote->tested;
 		$res->requires = $remote->requires;
@@ -86,10 +96,6 @@ function kcalto_plugin_info( $res, $action, $args ){
 }
 add_filter('plugins_api', 'kcalto_plugin_info', 20, 3);
 
-
-/*
-Source: https://rudrastyh.com/wordpress/self-hosted-plugin-update.html
-*/
 function kcalto_push_update( $transient ){
   global $INFO_URL;
  
@@ -97,40 +103,18 @@ function kcalto_push_update( $transient ){
       return $transient;
   }
 
-  $plugin_slug = KCALTO_SLUG; // we are going to use it in many places in this function
-
- 
-	// TODO: Try the cache first
-	// if( false == $remote = get_transient( 'update_' . $plugin_slug ) ) {
- 
-		// info.json is the file with the actual plugin information on your server
-		$remote = wp_remote_get( $INFO_URL, array (
-			'timeout' => 10,
-			'headers' => array(
-				'Accept' => 'application/json'
-			) )
-		);
- 
-		if ( !is_wp_error( $remote ) && isset( $remote['response']['code'] ) && $remote['response']['code'] == 200 && !empty( $remote['body'] ) ) {
-			set_transient( 'update_' . $plugin_slug, $remote, 43200 ); // 12 hours cache
-		}
- 
-  // }
-  
-  $current_version = KCALTO_CURRENT_VERSION;
   $plugin = 'kcalto/kcalto.php';
+	$remote = kcalto_get_cached_remote_info();
 
 	if( $remote ) {
     
     $remote = json_decode( $remote['body'] ); 
 
-    var_dump($plugin_slug, $remote->version, $current_version);
-
 		// your installed plugin version should be on the line below! You can obtain it dynamically of course 
-		if( $remote && version_compare( $current_version, $remote->version, '<' ) && version_compare($remote->requires, get_bloginfo('version'), '<' ) ) {
+		if( $remote && version_compare( KCALTO_CURRENT_VERSION, $remote->version, '<' ) && version_compare($remote->requires, get_bloginfo('version'), '<' ) ) {
       $res = new stdClass();
       
-			$res->slug = $plugin_slug;
+			$res->slug = KCALTO_SLUG;
 			$res->plugin = $plugin;
 			$res->new_version = $remote->version;
 			$res->tested = $remote->tested;
@@ -141,7 +125,7 @@ function kcalto_push_update( $transient ){
 
   }
 
-  $transient->checked[$plugin] = $current_version;
+  $transient->checked[$plugin] = KCALTO_CURRENT_VERSION;
 
   return $transient;
 }
