@@ -51,6 +51,13 @@ class kcalto_Widget extends WP_Widget
     global $kcalto_api_url;
 
     $url = $kcalto_api_url . preg_replace('/https?:\/\//', '', $canonical_url);
+    $cache_key = KCALTO_SLUG . $canonical_url;
+
+    $cached_nutrition_table = get_transient($cache_key);
+
+    if ($cached_nutrition_table) {
+      return $cached_nutrition_table;
+    }
 
     $request_options = array(
       'timeout' => 5,
@@ -62,11 +69,10 @@ class kcalto_Widget extends WP_Widget
       )
     );
 
-    // TODO: Cache the request using url as key
     $response = wp_remote_get($url, $request_options);
 
     $response_code = wp_remote_retrieve_response_code($response);
-    $nutrition_table = null;
+    $nutrition_table = '';
 
     if (!($response_code >= 400)) {
       $response_body = wp_remote_retrieve_body($response);
@@ -76,6 +82,8 @@ class kcalto_Widget extends WP_Widget
       $api_element = $dom->getElementById('kcalto-nutrition');
       $nutrition_table = $dom->saveHTML($api_element);
     }
+
+    set_transient($cache_key, $nutrition_table, 60 * 60 * 1);
 
     return $nutrition_table;
   }
