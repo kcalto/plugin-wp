@@ -2,19 +2,6 @@
 require_once('widget.php');
 require_once('version.php');
 
-if (!defined('KCALTO_SLUG')) {
-  // Changing this breaks remote updates
-  define('KCALTO_SLUG', 'kcalto/kcalto.php');
-}
-
-if (!defined('KCALTO_TRANSIENT')) {
-  define('KCALTO_TRANSIENT', 'update_' . KCALTO_SLUG);
-}
-
-if (!defined('KCALTO_REMOTE_RELEASES_URL')) {
-  define('KCALTO_REMOTE_RELEASES_URL', 'http://releases.kcalto.com/wordpress/info.json');
-}
-
 function kcalto_hook_activation()
 {
 }
@@ -31,6 +18,138 @@ function kcalto_hook_uninstall()
   kcalto_hook_deactivation();
 }
 register_uninstall_hook(KCALTO_FILE, 'kcalto_hook_uninstall');
+
+function kcalto_admin_menu()
+{
+  add_options_page(
+    'Kcalto',
+    'Kcalto',
+    'manage_options',
+    KCALTO_SETTINGS,
+    'kcalto_settings_page_callback'
+  );
+}
+add_action('admin_menu', 'kcalto_admin_menu');
+
+function kcalto_settings_page_callback()
+{
+  if (!current_user_can('manage_options')) {
+    wp_die(__('You do not have sufficient permissions to access this page.'));
+  }
+?>
+  <div class="wrap">
+    <h2>Kcalto settings</h2>
+    <form action="options.php" method="POST">
+      <?php settings_fields(KCALTO_SETTINGS); ?>
+      <div class="settings-container">
+        <?php do_settings_sections(KCALTO_SETTINGS); ?>
+      </div>
+      <?php submit_button(); ?>
+    </form>
+  </div>
+<?php
+}
+
+function kcalto_add_option_field($option_slug, $option_name, $type, $section =  'kcalto_default_section')
+{
+  add_settings_field(
+    $option_slug,
+    $option_name,
+    'kcalto_display_field',
+    KCALTO_SETTINGS,
+    $section,
+    array(
+      'type' => $type,
+      'name' => $option_slug,
+    )
+  );
+}
+
+function kcalto_settings_init()
+{
+  add_option(KCALTO_SETTINGS, array(
+    'api_key' => '',
+    'yoast_fix' => false,
+    'aioseo_fix' => false
+  ), '', 'yes');
+
+  register_setting(KCALTO_SETTINGS, KCALTO_SETTINGS, 'kcalto_settings_validate');
+
+  add_settings_section(
+    'kcalto_default_section',
+    'Common',
+    'kcalto_common_section_callback',
+    KCALTO_SETTINGS
+  );
+
+  add_settings_section(
+    'kcalto_debug_section',
+    'Debug',
+    'kcalto_debug_section_callback',
+    KCALTO_SETTINGS
+  );
+
+  kcalto_add_option_field(
+    'api_key',
+    'API key',
+    'text'
+  );
+
+  kcalto_add_option_field(
+    'yoast_fix',
+    'Yoast debug',
+    'checkbox',
+    'kcalto_debug_section'
+  );
+
+  kcalto_add_option_field(
+    'aioseo_fix',
+    'All In One SEO debug',
+    'checkbox',
+    'kcalto_debug_section'
+  );
+}
+add_action('admin_init', 'kcalto_settings_init');
+
+function kcalto_common_section_callback()
+{
+  echo 'Common settings.';
+}
+
+function kcalto_debug_section_callback()
+{
+  echo 'Should be left unmodified at the live site.';
+}
+
+function kcalto_display_field($args)
+{
+  $options = get_option(KCALTO_SETTINGS);
+
+  $name = $args['name'];
+  $option_type = $args['type'];
+
+  $option_name = KCALTO_SETTINGS . "[" . $name  . "]";
+  $option_value = $options[$name];
+
+  switch ($option_type) {
+    case 'text':
+      echo "<input type='" . esc_attr($option_type) . "' name='" . esc_attr($option_name) . "' value='" . $option_value . "' />";
+      break;
+
+    case 'checkbox':
+      $checked = '';
+      if ($option_value) {
+        $checked = 'checked="checked"';
+      }
+      echo "<input type='" . esc_attr($option_type) . "' name='" . esc_attr($option_name) . "'" . $checked . " />";
+      break;
+  }
+}
+
+function kcalto_settings_validate($data)
+{
+  return $data;
+}
 
 function kcalto_get_cached_remote_info()
 {
