@@ -153,9 +153,7 @@ function kcalto_settings_validate($data)
 
 function kcalto_get_cached_remote_info()
 {
-  /*
-  Plugin update code thanks to https://rudrastyh.com/wordpress/self-hosted-plugin-update.html
-  */
+  // Plugin update code thanks to https://rudrastyh.com/wordpress/self-hosted-plugin-update.html
   if (false == $remote = get_transient(KCALTO_TRANSIENT)) {
 
     $remote = wp_remote_get(
@@ -182,12 +180,10 @@ function kcalto_get_cached_remote_info()
 
 function kcalto_plugin_info($res, $action, $args)
 {
-  // do nothing if this is not about getting plugin information
   if ('plugin_information' !== $action) {
     return false;
   }
 
-  // do nothing if it is not our plugin
   if (KCALTO_SLUG !== $args->slug) {
     return false;
   }
@@ -208,11 +204,13 @@ function kcalto_plugin_info($res, $action, $args)
     $res->trunk = $remote->download_url;
     $res->requires_php = $remote->requires_php;
     $res->last_updated = $remote->last_updated;
+    /*
     $res->sections = array(
       'description' => $remote->sections->description,
       'installation' => $remote->sections->installation,
       'changelog' => $remote->sections->changelog
     );
+    */
 
     return $res;
   }
@@ -238,7 +236,6 @@ function kcalto_site_transient_update_plugins($transient)
 
     $remote = json_decode($remote['body']);
 
-    // your installed plugin version should be on the line below! You can obtain it dynamically of course 
     if ($remote && version_compare(KCALTO_CURRENT_VERSION, $remote->version, '<') && version_compare($remote->requires, get_bloginfo('version'), '<')) {
 
       $res->new_version = $remote->version;
