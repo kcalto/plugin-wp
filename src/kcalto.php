@@ -38,7 +38,10 @@ function kcalto_settings_page_callback()
   }
 ?>
   <div class="wrap">
-    <h2>Kcalto settings</h2>
+    <h2>Ustawienia wtyczki Kcalto</h2>
+    <a href="https://www.notion.so/Integracja-z-blogiem-wtyczka-WordPress-f7bf3ccdb669468091a3bff682f38e31" target="_blank">
+      Szczegółowe instrukcje i sposób instalacji wtyczki na blogu dostepne są tutaj.
+    </a>
     <form action="options.php" method="POST">
       <?php settings_fields(KCALTO_SETTINGS); ?>
       <div class="settings-container">
@@ -50,7 +53,7 @@ function kcalto_settings_page_callback()
 <?php
 }
 
-function kcalto_add_option_field($option_slug, $option_name, $type, $section =  'kcalto_default_section')
+function kcalto_add_option_field($option_slug, $option_name, $type, $section = 'kcalto_default_section', $disabled = false)
 {
   add_settings_field(
     $option_slug,
@@ -61,6 +64,7 @@ function kcalto_add_option_field($option_slug, $option_name, $type, $section =  
     array(
       'type' => $type,
       'name' => $option_slug,
+      'disabled' => $disabled
     )
   );
 }
@@ -77,34 +81,36 @@ function kcalto_settings_init()
 
   add_settings_section(
     'kcalto_default_section',
-    'Common',
+    'Ogólne',
     'kcalto_common_section_callback',
     KCALTO_SETTINGS
   );
 
   add_settings_section(
     'kcalto_debug_section',
-    'Debug',
+    'Ustawienia debugowania',
     'kcalto_debug_section_callback',
     KCALTO_SETTINGS
   );
 
   kcalto_add_option_field(
     'api_key',
-    'API key',
-    'text'
+    'Klucz API',
+    'text',
+    'kcalto_default_section',
+    true
   );
 
   kcalto_add_option_field(
     'yoast_fix',
-    'Yoast debug',
+    'Yoast SEO',
     'checkbox',
     'kcalto_debug_section'
   );
 
   kcalto_add_option_field(
     'aioseo_fix',
-    'All In One SEO debug',
+    'All In One SEO',
     'checkbox',
     'kcalto_debug_section'
   );
@@ -113,12 +119,14 @@ add_action('admin_init', 'kcalto_settings_init');
 
 function kcalto_common_section_callback()
 {
-  echo 'Common settings.';
 }
 
 function kcalto_debug_section_callback()
 {
-  echo 'Should be left unmodified at the live site.';
+?>
+  <p>Ustawienia służące testowaniu bloga pod domeną inną niż publicznie dostępna.</p>
+  <a href="https://www.notion.so/Integracja-z-blogiem-wtyczka-WordPress-f7bf3ccdb669468091a3bff682f38e31#f0919a38c93146ab85b7929f3dfe381e" target="_blank">Dowiedz się więcej.</a>
+<?php
 }
 
 function kcalto_display_field($args)
@@ -127,13 +135,19 @@ function kcalto_display_field($args)
 
   $name = $args['name'];
   $option_type = $args['type'];
+  $disabled = $args['disabled'];
 
   $option_name = KCALTO_SETTINGS . "[" . $name  . "]";
   $option_value = $options[$name];
 
+  $maybe_disabled = '';
+  if ($disabled === true) {
+    $maybe_disabled = 'disabled';
+  }
+
   switch ($option_type) {
     case 'text':
-      echo "<input type='" . esc_attr($option_type) . "' name='" . esc_attr($option_name) . "' value='" . $option_value . "' />";
+      echo "<input type='" . esc_attr($option_type) . "' name='" . esc_attr($option_name) . "' value='" . $option_value . "' " . $maybe_disabled . " />";
       break;
 
     case 'checkbox':
@@ -141,7 +155,7 @@ function kcalto_display_field($args)
       if ($option_value) {
         $checked = 'checked="checked"';
       }
-      echo "<input type='" . esc_attr($option_type) . "' name='" . esc_attr($option_name) . "'" . $checked . " />";
+      echo "<input type='" . esc_attr($option_type) . "' name='" . esc_attr($option_name) . "'" . $checked . " " . $maybe_disabled . "/>";
       break;
   }
 }

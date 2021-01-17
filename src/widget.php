@@ -8,7 +8,7 @@ class kcalto_Widget extends WP_Widget
   {
     $widget_options = array(
       'classname' => 'kcalto_Widget',
-      'description' => "Kcalto's nutrition values table",
+      'description' => "Wyświetla tabelę wartości odżywczych dla obsługiwanych wpisów.",
     );
     parent::__construct('kcalto_Widget', 'Kcalto Widget', $widget_options);
 
