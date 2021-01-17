@@ -10,6 +10,7 @@ VERSION=$(jq -r '.version' $INFOFILE)
 echo "Building version '$VERSION'..."
 
 FILENAME="releases/packages/kcalto-$VERSION.zip"
+FILENAME_LATEST="releases/packages/latest.zip"
 
 # Add a way to know plugin's version
 touch ./src/version.php
@@ -30,6 +31,7 @@ cp -R ./src ./build
 # Move deployment pkg to releases
 cp -R ./build ./kcalto
 zip -r $FILENAME ./kcalto
+cp $FILENAME $FILENAME_LATEST
 rm -rf ./kcalto
 
 # Update remote info.json
