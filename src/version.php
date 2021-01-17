@@ -1,2 +1,2 @@
-<?php define('KCALTO_CURRENT_VERSION', '0.0.6');
+<?php define('KCALTO_CURRENT_VERSION', '0.0.7');
 
