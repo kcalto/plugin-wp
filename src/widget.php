@@ -23,6 +23,10 @@ class kcalto_Widget extends WP_Widget
     global $wpdb;
     global $post;
 
+    if (is_front_page()) {
+      return null;
+    }
+
     try {
       if ($this->options['yoast_fix'] == 'on') {
         $yoast_query = $wpdb->prepare("SELECT `canonical` FROM `{$wpdb->prefix}yoast_indexable` WHERE `object_type`=\"post\" AND `object_id`=\"%d\"", $post->ID);
@@ -49,6 +53,10 @@ class kcalto_Widget extends WP_Widget
   private function get_nutrition_table($canonical_url)
   {
     global $kcalto_api_url;
+
+    if (!$canonical_url) {
+      return null;
+    }
 
     $url = $kcalto_api_url . preg_replace('/https?:\/\//', '', $canonical_url);
     $cache_key = KCALTO_SLUG . $canonical_url;
