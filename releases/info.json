@@ -1,9 +1,9 @@
 {
   "name": "Kcalto",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "requires": "5.0",
   "tested": "5.6",
   "requires_php": "5.3",
-  "last_updated": "2021-01-18 07:29:52",
-  "download_url": "http://releases.kcalto.com/wordpress/packages/kcalto-0.0.8.zip"
+  "last_updated": "2021-01-20 16:09:26",
+  "download_url": "https://releases.kcalto.com/wordpress/packages/kcalto-0.0.9.zip"
 }
