@@ -25,7 +25,7 @@ if (!defined('KCALTO_TRANSIENT')) {
 }
 
 if (!defined('KCALTO_REMOTE_RELEASES_URL')) {
-	define('KCALTO_REMOTE_RELEASES_URL', 'http://releases.kcalto.com/wordpress/info.json');
+	define('KCALTO_REMOTE_RELEASES_URL', 'https://releases.kcalto.com/wordpress/info.json');
 }
 
 

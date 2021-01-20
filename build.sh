@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-REMOTE_URL="http://releases.kcalto.com/wordpress"
+REMOTE_URL="https://releases.kcalto.com/wordpress"
 INFOFILE="./info.template.json"
 TARGET_INFOFILE="releases/info.json"
 
