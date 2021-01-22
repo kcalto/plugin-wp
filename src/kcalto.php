@@ -119,6 +119,9 @@ add_action('admin_init', 'kcalto_settings_init');
 
 function kcalto_common_section_callback()
 {
+?>
+  <p>W przyszłości wymagane będzie ustawienie klucza API.</p>
+<?php
 }
 
 function kcalto_debug_section_callback()

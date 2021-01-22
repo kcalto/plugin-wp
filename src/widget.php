@@ -70,10 +70,10 @@ class kcalto_Widget extends WP_Widget
     $request_options = array(
       'timeout' => 5,
       'headers' => array(
-        'X-API-KEY' => $this->options['api_key'],
-        'X-WP-NAME' => $this->sourceName,
-        'X-WP-VERSION' => $this->sourceVersion,
-        'X-PHP-VERSION' => $this->phpVersion,
+        'X-KCALTO-API-KEY' => $this->options['api_key'],
+        'X-KCALTO-WP-NAME' => $this->sourceName,
+        'X-KCALTO-WP-VERSION' => $this->sourceVersion,
+        'X-KCALTO-PHP-VERSION' => $this->phpVersion,
       )
     );
 
