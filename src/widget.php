@@ -28,7 +28,7 @@ class kcalto_Widget extends WP_Widget
     }
 
     try {
-      if ($this->options['yoast_fix'] == 'on') {
+      if (array_key_exists('yoast_fix', $this->options) && $this->options['yoast_fix'] == 'on') {
         $yoast_query = $wpdb->prepare("SELECT `canonical` FROM `{$wpdb->prefix}yoast_indexable` WHERE `object_type`=\"post\" AND `object_id`=\"%d\"", $post->ID);
         $yoast_seo_canonical = $wpdb->get_results($yoast_query)[0]->canonical;
         if ($yoast_seo_canonical) {
@@ -36,7 +36,7 @@ class kcalto_Widget extends WP_Widget
         }
       }
 
-      if ($this->options['aioseo_fix'] == 'on') {
+      if (array_key_exists('aioseo_fix', $this->options) && $this->options['aioseo_fix'] == 'on') {
         $aioseo_query = $wpdb->prepare("SELECT `canonical_url` FROM `{$wpdb->prefix}aioseo_posts` WHERE `post_id`=\"%d\"", $post->ID);
         $aioseo_seo_canonical = $wpdb->get_results($aioseo_query)[0]->canonical_url;
         if ($aioseo_seo_canonical) {
@@ -71,7 +71,9 @@ class kcalto_Widget extends WP_Widget
       'timeout' => 5,
       'headers' => array(
         'X-KCALTO-API-KEY' => $this->options['api_key'],
+        'X-KCALTO-CANONICAL-SOURCE' => $canonical_url,
         'X-KCALTO-WP-NAME' => $this->sourceName,
+        'X-KCALTO-PLUGIN-VERSION' => KCALTO_CURRENT_VERSION,
         'X-KCALTO-WP-VERSION' => $this->sourceVersion,
         'X-KCALTO-PHP-VERSION' => $this->phpVersion,
       )
@@ -80,26 +82,25 @@ class kcalto_Widget extends WP_Widget
     $response = wp_remote_get($url, $request_options);
 
     $response_code = wp_remote_retrieve_response_code($response);
-    $nutrition_table = '';
+    $nutrition_table = null;
 
     if (!($response_code >= 400)) {
       $response_body = wp_remote_retrieve_body($response);
 
-      $dom = new DOMDocument();
-      $dom->loadHTML($response_body);
-      $api_element = $dom->getElementById('kcalto-nutrition');
-      $nutrition_table = $dom->saveHTML($api_element);
+      preg_match('/<div id="kcalto-nutrition">(.*)<\/div>/s', $response_body, $match);
+      $nutrition_table = $match[0];
     }
 
-    set_transient($cache_key, $nutrition_table, 60 * 60 * 1);
+    if ($nutrition_table) {
+      set_transient($cache_key, $nutrition_table, 60 * 60 * 1);
+    }
 
     return $nutrition_table;
   }
 
   public function widget($args, $instance)
   {
-
-    $title = apply_filters('widget_title', $instance['title']);
+    $title = array_key_exists('title', $instance) ? apply_filters('widget_title', $instance['title']) : null;
 
     $canonical_url = $this->get_custom_canonical_url();
     $nutrition_table = $this->get_nutrition_table($canonical_url);
